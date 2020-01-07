@@ -720,6 +720,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
       if(tmp1.is<std::string>())
       str1=tmp1.as<std::string>();     
       tmp2=visit(ctx->trailer());
+      
       if(str1=="print"){
         int m=ctx->trailer()->arglist()->argument().size();
         for(int j=0;j<m;++j){
@@ -759,6 +760,10 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         }
         std::cout<<std::endl;
       }
+      if(f==-1&&tmp2.is<std::string>()&&mymap.count(tmp2.as<std::string>()))
+        tmp2=mymap[tmp2.as<std::string>()];
+      if(f!=-1&&tmp2.is<std::string>()&&fun[f].count(tmp2.as<std::string>()))
+        tmp2=fun[f][tmp2.as<std::string>()];
       if(str1=="int"){
         if(tmp2.is<bool>()) return (int)tmp2.as<bool>();
         if(tmp2.is<std::string>()) {

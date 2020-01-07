@@ -59,7 +59,7 @@ class longint{
         return l;
     }
     operator bool () const {
-        if(lint.size()==0&&lint[0] =='0')return false;
+        if(lint.size()==1&&lint[0] =='0')return false;
         else return true;
     } 
     operator double () const {
