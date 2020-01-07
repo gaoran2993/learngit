@@ -9,6 +9,11 @@
 #include<vector>
 #include<iomanip>
 std::map<std::string,antlrcpp::Any>mymap;
+std::map<std::string,Python3Parser::SuiteContext*>funsuite;
+std::map<std::string,Python3Parser::ParametersContext*>funpa;
+std::vector <antlrcpp::Any> vf;
+std::vector <std::map<std::string,antlrcpp::Any>> fun;
+int f=-1;
 class EvalVisitor: public Python3BaseVisitor {
 
 virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) override {
@@ -17,7 +22,11 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitFuncdef(Python3Parser::FuncdefContext *ctx) override {
-    return visitChildren(ctx);
+    
+    std::string str=ctx->NAME()->toString();
+    funsuite[str]=ctx->suite();
+    funpa[str]=ctx->parameters();
+    return 0;
   }
 
   virtual antlrcpp::Any visitParameters(Python3Parser::ParametersContext *ctx) override {
@@ -25,11 +34,29 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitTypedargslist(Python3Parser::TypedargslistContext *ctx) override {
+    
+    int n = ctx->tfpdef().size(),n2=ctx->test().size();
+    antlrcpp::Any tmp;
+    std::string str;
+    std::map<std::string,antlrcpp::Any> m;
+    fun.push_back(m);
+    f++;
+    for(int i=n2-1;i>=0;--i){
+      tmp=visit(ctx->test(i-1));
+      str=visit(ctx->tfpdef(i+n-n2-1)).as<std::string>();
+      if(!fun[f].count(str)) fun[f][str]=tmp;
+    }
+    for(int i=n-n2-1;i>=0;--i){
+      tmp=vf.back();
+      str=visit(ctx->tfpdef(i)).as<std::string>();
+      fun[f][str]=tmp;
+      vf.pop_back();
+    }
     return visitChildren(ctx);
   }
 
   virtual antlrcpp::Any visitTfpdef(Python3Parser::TfpdefContext *ctx) override {
-    return visitChildren(ctx);
+    return ctx->NAME()->toString();
   }
 
   virtual antlrcpp::Any visitStmt(Python3Parser::StmtContext *ctx) override {
@@ -55,14 +82,20 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         tmp=visit(ctx->testlist(n-1)->test(j));
         for(int i=0;i<n-1;++i){
           std::string str=visit(ctx->testlist(i)->test(j)).as<std::string>();
-          if(tmp.is<std::string>()&&mymap.count(tmp.as<std::string>())){
-            tmp=mymap[tmp.as<std::string>()];
+          if(f==-1){
+            if(tmp.is<std::string>()&&(mymap.count(tmp.as<std::string>()))){
+              tmp=mymap[tmp.as<std::string>()];
+            }
+            mymap[str]=tmp;}
+          else{
+            if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>())){
+              tmp=fun[f][tmp.as<std::string>()];
+            }
+            fun[f][str]=tmp;
           }
-          mymap[str]=tmp;
           
         }
-      }  std::string s1="99",s2="3";
-      longint l1=s1,l2=s2,l3=l1/l2;
+      }
       visitChildren(ctx);
     }
     if(ctx->augassign()){
@@ -73,6 +106,8 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         antlrcpp::Any tmp=visit(ctx->testlist(i));
         if(tmp.is<std::string>()&&mymap.count(tmp.as<std::string>()))
           tmp=mymap[tmp.as<std::string>()];
+        if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>()))
+          tmp=fun[f][tmp.as<std::string>()];
         v0.push_back(tmp);
         if(tmp.is<double>()) {num[i]=0;mi=std::min(mi,num[i]);}
         if(tmp.is<longint>()) {num[i]=1;mi=std::min(mi,num[i]);}
@@ -155,8 +190,11 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         }
         if(visit(ctx->augassign()).as<int>()==5) ans = ans.as<longint>()/vi[1];
         if(visit(ctx->augassign()).as<int>()==6) ans = ans.as<longint>()%vi[1];
-      mymap[visit(ctx->testlist(0)).as<std::string>()]=ans;
-      return mymap[visit(ctx->testlist(0)).as<std::string>()];
+      if(f==-1){
+          mymap[visit(ctx->testlist(0)).as<std::string>()]=ans;
+          return mymap[visit(ctx->testlist(0)).as<std::string>()];}
+      else fun[f][visit(ctx->testlist(0)).as<std::string>()]=ans;
+          return fun[f][visit(ctx->testlist(0)).as<std::string>()];
     }
     return visitChildren(ctx);
   }
@@ -222,6 +260,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitWhile_stmt(Python3Parser::While_stmtContext *ctx) override {
+
     if(ctx->WHILE()){
       while(1){  
         bool b=true;
@@ -354,6 +393,8 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         antlrcpp::Any tmp=visit(ctx->arith_expr(i));
         if(tmp.is<std::string>()&&mymap.count(tmp.as<std::string>()))
           tmp=mymap[tmp.as<std::string>()];
+        if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>()))
+          tmp=fun[f][tmp.as<std::string>()];
         v0.push_back(tmp);
         if(tmp.is<double>()) {num[i]=0;mi=std::min(mi,num[i]);}
         if(tmp.is<longint>()) {num[i]=1;mi=std::min(mi,num[i]);}
@@ -461,6 +502,8 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         antlrcpp::Any tmp=visit(ctx->term(i));
         if(tmp.is<std::string>()&&mymap.count(tmp.as<std::string>()))
           tmp=mymap[tmp.as<std::string>()];
+        if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>()))
+          tmp=fun[f][tmp.as<std::string>()];
         v0.push_back(tmp);
         if(tmp.is<double>()) {num[i]=0;mi=std::min(mi,num[i]);}
         if(tmp.is<longint>()) {num[i]=1;mi=std::min(mi,num[i]);}
@@ -563,6 +606,8 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         antlrcpp::Any tmp=visit(ctx->factor(i));
         if(tmp.is<std::string>()&&mymap.count(tmp.as<std::string>()))
           tmp=mymap[tmp.as<std::string>()];
+        if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>()))
+          tmp=fun[f][tmp.as<std::string>()];
         v0.push_back(tmp);
         if(tmp.is<double>()) {num[i]=0;mi=std::min(mi,num[i]);}
         if(tmp.is<longint>()) {num[i]=1;mi=std::min(mi,num[i]);}
@@ -671,7 +716,10 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
             std::cout<<str<<" ";
             }
             else {
-              tmp2=mymap[tmp2.as<std::string>()];
+              if(f==-1)
+                tmp2=mymap[tmp2.as<std::string>()];
+              else
+                tmp2=fun[f][tmp2.as<std::string>()];
                 if(tmp2.is<std::string>()){
                   std::string tmp=tmp2.as<std::string>();
                   int s=tmp.size();
@@ -719,6 +767,37 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         }
         if(tmp2.is<longint>())return (bool)tmp2.as<longint>();
       }
+      if(str1=="str"){
+        if(tmp2.is<double>()) return std::to_string(tmp2.as<double>());
+        if(tmp2.is<bool>()) {
+          if(tmp2.as<bool>()) return std::string("1");
+          else return std::string("0");
+        }
+        if(tmp2.is<longint>())return std::string(tmp2.as<longint>());
+      }
+      if(funsuite.count(str1)){
+        
+        int n = ctx->trailer()->arglist()->argument().size(),n2=0;
+        antlrcpp::Any tmp ;
+        std::string s;
+        for(int i=0;i<n;++i){
+          tmp=visit(ctx->trailer()->arglist()->argument(i)->test());
+          if(f==-1&&mymap.count(tmp)) tmp=mymap[tmp];
+          if(f!=-1&&fun[f].count(tmp)) tmp=fun[f][tmp];
+          if(ctx->trailer()->arglist()->argument(i)->NAME()) {
+            s=ctx->trailer()->arglist()->argument(i)->NAME()->toString();
+            fun[f+1][s]=tmp;}
+          else {
+            n2++;
+            vf.push_back(tmp);
+          }
+          tmp = visit(funpa[str1]);
+          tmp = visit(funsuite[str1]);
+          fun.pop_back();
+          f--;
+        }
+      }  
+
 
     }
     else{
