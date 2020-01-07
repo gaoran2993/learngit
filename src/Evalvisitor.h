@@ -725,7 +725,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
                   int s=tmp.size();
                   if(tmp[0]=='"'){
                   std::string str = std::string(tmp,1,s-2);
-                  std::cout<<str<<std::endl;}
+                  std::cout<<str<<" ";}
                   else std::cout<<tmp<<" ";
                   }
                 }
