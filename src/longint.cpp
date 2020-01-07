@@ -213,7 +213,7 @@ longint operator/(const longint &a,const longint &b){
     return l;
 }
 bool operator>(const longint &a,const longint &b){
-        if(a.lint.size()>b.lint.size()||(a.lint.size()==b.lint.size()&&a.lint.compare(b.lint)==1)) return true;
+        if(a.lint.size()>b.lint.size()||(a.lint.size()==b.lint.size()&&a.lint>b.lint)) return true;
         else return false;
 }
 longint operator%(const longint &a,const longint &b){

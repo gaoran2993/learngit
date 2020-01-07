@@ -54,14 +54,16 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
       for(int j=0;j<m;++j){
         tmp=visit(ctx->testlist(n-1)->test(j));
         for(int i=0;i<n-1;++i){
-          std::string str=visit(ctx->testlist(i)->test(j));
+          std::string str=visit(ctx->testlist(i)->test(j)).as<std::string>();
           if(tmp.is<std::string>()&&mymap.count(tmp.as<std::string>())){
             tmp=mymap[tmp.as<std::string>()];
           }
           mymap[str]=tmp;
+          
         }
-      }  
-      return visitChildren(ctx);
+      }  std::string s1="99",s2="3";
+      longint l1=s1,l2=s2,l3=l1/l2;
+      visitChildren(ctx);
     }
     if(ctx->augassign()){
       int mi=10;
@@ -533,7 +535,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
     num = new int[n];
     std::string str0 , str;
     for(int i=0;i<10000;++i) str0+='0';
-    if(n1+n2>=1){
+    if(n1+n2+n3+n4>=1){
       for(int i=0;i<n1;++i){
         int s = ctx->STAR(i)->getSymbol()->getTokenIndex();
         str0[s]='*';
@@ -544,7 +546,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         }
       for(int i=0;i<n3;++i){
         int s = ctx->IDIV(i)->getSymbol()->getTokenIndex();
-        str0[s]='//';
+        str0[s]='!';
         }
       for(int i=0;i<n4;++i){
         int s = ctx->MOD(i)->getSymbol()->getTokenIndex();
@@ -624,7 +626,10 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
             ans=an;break;
           }
         }
-        if(str[i]=='//') ans = ans.as<longint>()/vi[i+1];
+        if(str[i]=='!') {
+          longint a=ans.as<longint>(),b=vi[i+1];
+          longint c = a/b;
+          ans = c;}
         if(str[i]=='%') ans = ans.as<longint>()%vi[i+1];
 
       }
