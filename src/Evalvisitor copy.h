@@ -17,7 +17,6 @@ int f=-1;
 class EvalVisitor: public Python3BaseVisitor {
 
 virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) override {
-
     return visitChildren(ctx);
   }
 
@@ -83,13 +82,17 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         tmp=visit(ctx->testlist(n-1)->test(j));
         for(int i=0;i<n-1;++i){
           std::string str=visit(ctx->testlist(i)->test(j)).as<std::string>();
-            if(tmp.is<std::string>()&&(mymap.count(tmp.as<std::string>())))
-              {tmp=mymap[tmp.as<std::string>()];     
-              mymap[str]=tmp;}
-            if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>()))
-              {tmp=fun[f][tmp.as<std::string>()];
-            fun[f][str]=tmp;}
-        
+          if(f==-1){
+            if(tmp.is<std::string>()&&(mymap.count(tmp.as<std::string>()))){
+              tmp=mymap[tmp.as<std::string>()];
+            }
+            mymap[str]=tmp;}
+          else{
+            if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>())){
+              tmp=fun[f][tmp.as<std::string>()];
+            }
+            fun[f][str]=tmp;
+          }
           
         }
       }
@@ -187,12 +190,11 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         }
         if(visit(ctx->augassign()).as<int>()==5) ans = ans.as<longint>()/vi[1];
         if(visit(ctx->augassign()).as<int>()==6) ans = ans.as<longint>()%vi[1];
-      std::string tmp0= visit(ctx->testlist(0)).as<std::string>();
-      if(mymap.count(tmp0)){
-          mymap[tmp0]=ans;
-          return mymap[tmp0];}
-      else fun[f][tmp0]=ans;
-          return fun[f][tmp0];
+      if(f==-1){
+          mymap[visit(ctx->testlist(0)).as<std::string>()]=ans;
+          return mymap[visit(ctx->testlist(0)).as<std::string>()];}
+      else fun[f][visit(ctx->testlist(0)).as<std::string>()]=ans;
+          return fun[f][visit(ctx->testlist(0)).as<std::string>()];
     }
     return visit(ctx->testlist(0));
   }
