@@ -17,7 +17,7 @@ int f=-1;
 class EvalVisitor: public Python3BaseVisitor {
 
 virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) override {
-
+std::cout<<1;
     return visitChildren(ctx);
   }
 
@@ -30,7 +30,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitParameters(Python3Parser::ParametersContext *ctx) override {
-    return visitChildren(ctx);
+    return visit(ctx->typedargslist());
   }
 
   virtual antlrcpp::Any visitTypedargslist(Python3Parser::TypedargslistContext *ctx) override {
@@ -59,16 +59,18 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitStmt(Python3Parser::StmtContext *ctx) override {
-    return visitChildren(ctx);
+    if(ctx->simple_stmt()) return visit(ctx->simple_stmt());
+    if(ctx->compound_stmt()) return visit(ctx->compound_stmt());
   }
 
   virtual antlrcpp::Any visitSimple_stmt(Python3Parser::Simple_stmtContext *ctx) override {
-    return visit(ctx->small_stmt());
+    if(ctx->small_stmt())return visit(ctx->small_stmt());
+    return 0;
   }
 
   virtual antlrcpp::Any visitSmall_stmt(Python3Parser::Small_stmtContext *ctx) override {
     if(ctx->expr_stmt()) return visit(ctx->expr_stmt());
-    else return visit(ctx->flow_stmt());
+    if(ctx->flow_stmt()) return visit(ctx->flow_stmt());
   }
 
   virtual antlrcpp::Any visitExpr_stmt(Python3Parser::Expr_stmtContext *ctx) override {
@@ -95,7 +97,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
           
         }
       }
-      visitChildren(ctx);
+      return 0;
     }
     if(ctx->augassign()){
       int mi=10;
@@ -195,7 +197,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
       else fun[f][visit(ctx->testlist(0)).as<std::string>()]=ans;
           return fun[f][visit(ctx->testlist(0)).as<std::string>()];
     }
-    return visitChildren(ctx);
+    return visit(ctx->testlist(0));
   }
 
   virtual antlrcpp::Any visitAugassign(Python3Parser::AugassignContext *ctx) override {
@@ -230,7 +232,9 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitCompound_stmt(Python3Parser::Compound_stmtContext *ctx) override {
-    return visitChildren(ctx);
+    if(ctx->if_stmt()) return visit(ctx->if_stmt());
+    if(ctx->while_stmt()) return visit(ctx->while_stmt());
+    if(ctx->funcdef()) return visit(ctx->funcdef());
   }
 
   virtual antlrcpp::Any visitIf_stmt(Python3Parser::If_stmtContext *ctx) override {
@@ -710,10 +714,9 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   }
 
   virtual antlrcpp::Any visitAtom_expr(Python3Parser::Atom_exprContext *ctx) override {
-
-    antlrcpp::Any tmp1,tmp2;
     longint l;
     bool b;
+    antlrcpp::Any tmp ,tmp1,tmp2;
     std::string str1,str2;
     if(ctx->trailer()){       
       tmp1=visit(ctx->atom());
@@ -733,7 +736,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
             std::cout<<str<<" ";
             }
             else {
-              if(f==-1)
+              if(mymap.count(tmp2.as<std::string>()))
                 tmp2=mymap[tmp2.as<std::string>()];
               else
                 tmp2=fun[f][tmp2.as<std::string>()];
@@ -760,7 +763,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         }
         std::cout<<std::endl;
       }
-      if(f==-1&&tmp2.is<std::string>()&&mymap.count(tmp2.as<std::string>()))
+      if(tmp2.is<std::string>()&&mymap.count(tmp2.as<std::string>()))
         tmp2=mymap[tmp2.as<std::string>()];
       if(f!=-1&&tmp2.is<std::string>()&&fun[f].count(tmp2.as<std::string>()))
         tmp2=fun[f][tmp2.as<std::string>()];
@@ -770,6 +773,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
           longint li=tmp2.as<std::string>();
           return (int)(double)li;
         }
+        if(tmp2.is<longint>()) return tmp2;
         if(tmp2.is<double>())return (int)tmp2.as<double>();
       }
       if(str1=="float"){
@@ -778,14 +782,16 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
           longint li=tmp2.as<std::string>();
           return (double)li;
         }
+        if(tmp2.is<double>()) return tmp2;
         if(tmp2.is<longint>())return (double)tmp2.as<longint>();
       }
       if(str1=="bool"){
         if(tmp2.is<double>()) return (bool)tmp2.as<double>();
         if(tmp2.is<std::string>()) {
-          if(tmp2.as<std::string>().empty()) return true;
-          else return false;
+          if(tmp2.as<std::string>().empty()) return false;
+          else return true;
         }
+        if(tmp2.is<bool>()) return tmp2;
         if(tmp2.is<longint>())return (bool)tmp2.as<longint>();
       }
       if(str1=="str"){
@@ -794,6 +800,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
           if(tmp2.as<bool>()) return std::string("1");
           else return std::string("0");
         }
+        if(tmp2.is<std::string>()) return tmp2;
         if(tmp2.is<longint>())return std::string(tmp2.as<longint>());
       }
       if(funsuite.count(str1)){
@@ -842,8 +849,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
         return int(0);
       }
       }
-    return visitChildren(ctx);
-    
+   return visitChildren(ctx)  ;
    
   }
 
@@ -855,11 +861,14 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
   virtual antlrcpp::Any visitAtom(Python3Parser::AtomContext *ctx) override {
     std::string tmp;
     if(ctx->NAME()) {
-      tmp = ctx->NAME()->toString();
+      tmp = ctx->NAME()->toString();std::cout<<tmp;
       return tmp;
       }
     if(ctx->STRING(0)){
       tmp = ctx->STRING(0)->toString();
+      for(int i=1;i<ctx->STRING().size();++i){
+        tmp+=ctx->STRING(i)->toString();
+      }
       return tmp;
       }
     if(ctx->NUMBER()){
@@ -903,6 +912,7 @@ virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) ove
     if(ctx->NONE()){
       return int(0);
     }
+    if(ctx->test()) return visit(ctx->test());
   }
 
   virtual antlrcpp::Any visitTestlist(Python3Parser::TestlistContext *ctx) override {
