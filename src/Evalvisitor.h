@@ -17,7 +17,7 @@ int f=-1;
 class EvalVisitor: public Python3BaseVisitor {
 
 virtual antlrcpp::Any visitFile_input(Python3Parser::File_inputContext *ctx) override {
-std::cout<<1;
+
     return visitChildren(ctx);
   }
 
@@ -83,17 +83,13 @@ std::cout<<1;
         tmp=visit(ctx->testlist(n-1)->test(j));
         for(int i=0;i<n-1;++i){
           std::string str=visit(ctx->testlist(i)->test(j)).as<std::string>();
-          if(f==-1){
-            if(tmp.is<std::string>()&&(mymap.count(tmp.as<std::string>()))){
-              tmp=mymap[tmp.as<std::string>()];
-            }
-            mymap[str]=tmp;}
-          else{
-            if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>())){
-              tmp=fun[f][tmp.as<std::string>()];
-            }
-            fun[f][str]=tmp;
-          }
+            if(tmp.is<std::string>()&&(mymap.count(tmp.as<std::string>())))
+              {tmp=mymap[tmp.as<std::string>()];     
+              mymap[str]=tmp;}
+            if(tmp.is<std::string>()&&fun[f].count(tmp.as<std::string>()))
+              {tmp=fun[f][tmp.as<std::string>()];
+            fun[f][str]=tmp;}
+        
           
         }
       }
@@ -191,11 +187,12 @@ std::cout<<1;
         }
         if(visit(ctx->augassign()).as<int>()==5) ans = ans.as<longint>()/vi[1];
         if(visit(ctx->augassign()).as<int>()==6) ans = ans.as<longint>()%vi[1];
-      if(f==-1){
-          mymap[visit(ctx->testlist(0)).as<std::string>()]=ans;
-          return mymap[visit(ctx->testlist(0)).as<std::string>()];}
-      else fun[f][visit(ctx->testlist(0)).as<std::string>()]=ans;
-          return fun[f][visit(ctx->testlist(0)).as<std::string>()];
+      std::string tmp0= visit(ctx->testlist(0)).as<std::string>();
+      if(mymap.count(tmp0)){
+          mymap[tmp0]=ans;
+          return mymap[tmp0];}
+      else fun[f][tmp0]=ans;
+          return fun[f][tmp0];
     }
     return visit(ctx->testlist(0));
   }
@@ -861,7 +858,7 @@ std::cout<<1;
   virtual antlrcpp::Any visitAtom(Python3Parser::AtomContext *ctx) override {
     std::string tmp;
     if(ctx->NAME()) {
-      tmp = ctx->NAME()->toString();std::cout<<tmp;
+      tmp = ctx->NAME()->toString();
       return tmp;
       }
     if(ctx->STRING(0)){
